@@ -1,0 +1,88 @@
+\documentclass{article}
+\usepackage{fullpage}
+\usepackage[colorlinks=true, linkcolor=blue]{hyperref}
+\usepackage{placeins}
+\title{Assignment \#1}
+\author{Dominic LaRoche}
+\begin{document}
+\maketitle
+
+I will include embedded code for all analyses in this assignment but please let me know if you would like me to just include one chunk of code at the end of the document.  I first read in the data from the .csv file.\\
+<<readAndDescribe,message=FALSE>>=
+rm(list=ls())
+crime<-read.csv("C:/Classes/GeoStat/crime.csv")
+
+@
+
+Now we can do some exploration of the variables to see how they are distributed and what the relationships might be between them. Figure \ref{crime} shows the distribution of the crime variable.  We see some departures from normality, although it is not too severe.  Figure~\ref{hoval} shows the distribution of the variable ``HOVAL", which has a much more severe departure from normality.  Finally, figure~\ref{inc} gives the sample distribution of the variable ``INC", which also has a strong right skew (similar to ``HOVAL") and does not appear normally distributed.\\
+\begin{figure}
+<<CRIMEdesc,fig.keep='high',fig.height=4>>=
+par(mfrow=c(1,2))
+hist(crime$CRIME,breaks="Scott")
+qqnorm(crime$CRIME)
+qqline(crime$CRIME)
+@
+\caption{Histogram and qqplot for the CRIME variable showing departure from normality}
+\label{crime}
+\end{figure}
+
+\begin{figure}
+<<HOVALdes,fig.keep='high',fig.height=4>>=
+par(mfrow=c(1,2))
+hist(crime$HOVAL,breaks="Scott")
+qqnorm(crime$HOVAL)
+qqline(crime$HOVAL)
+@
+\caption{Histogram and qqplot for the variable ``HOVAL" showing severe departure from normality with a strong right skew.}
+\label{hoval}
+\end{figure}
+
+\begin{figure}
+<<INCdesc,fig.keep='high',fig.height=4>>=
+par(mfrow=c(1,2))
+hist(crime$INC,breaks="Scott")
+qqnorm(crime$INC)
+qqline(crime$INC)
+par(mfrow=c(1,1))
+@
+\caption{Histogram and qqplot for the variable ``INC" showing the strong right skew and departure from normality}
+\label{inc}
+\end{figure}
+\FloatBarrier
+
+To see the relationship between these variables we can look at a scatterplot matrix (figure~\ref{scatmat}). We can see from this matrix that the income is positively correlated with home value and both home value and income are negatively correlated with crime.\\
+
+\begin{figure}[hb]
+<<scatmat,fig.height=6>>=
+plot(crime[,c("INC","HOVAL","CRIME")])
+@
+\caption{Scatterplot matrix of variables ``INC", ``HOVAL", and ``CRIME" showing a positive relationship between ``INC" and ``HOVAL" and negative relationships between ``INC" and ``CRIME" as well as ``CRIME" and ``HOVAL".}
+\label{scatmat}
+\end{figure}
+
+<<model>>=
+m1<-lm(CRIME~INC+HOVAL,data=crime)
+r1<-residuals(m1)
+f1<-fitted(m1)
+@
+We can model crime as a function of home value and income and get the following fitted model using maximum likelihood methods (equivalent to least-squares in this case).
+$$CRIME = \Sexpr{m1$coeff[1]} + \Sexpr{m1$coeff[2]} \times INC + \Sexpr{m1$coeff[3]} \times HOVAL + \epsilon$$
+We must check to see if the fitted model violates the normality assumption of the linear regression, i.e. that the residuals ($\epsilon$) are normally distributed.  Figure~\ref{check} shows that the normality assumption generally holds, although the model could possibly be improved by some variance stabilizing transformations of the variables.\\
+
+\begin{figure}
+<<checkresid>>=
+par(mfrow=c(2,2))
+plot(crime$CRIME~f1, ylab="Crime", xlab="Predicted Crime")
+abline(0,1)
+plot(crime$CRIME, r1, ylab="Residuals")
+abline(h=0)
+hist(r1, xlab="Residuals")
+qqnorm(r1, ylab="Residuals")
+qqline(r1)
+par(mfrow=c(1,1))
+@
+\caption{Inspection of predicted vs observed values as well as the residuals indicates that the normality assumption generally holds for this model}
+\label{check}
+\end{figure}
+
+\end{document}

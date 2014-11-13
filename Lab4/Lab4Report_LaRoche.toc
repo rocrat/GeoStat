@@ -1,0 +1,4 @@
+\contentsline {section}{\numberline {1}Assignment I: Allocation Analysis}{1}{section.1}
+\contentsline {section}{\numberline {2}Assignment II: Inverse Distance Weighting}{5}{section.2}
+\contentsline {section}{\numberline {3}Assignment III: Spline Analysis}{15}{section.3}
+\contentsline {section}{\numberline {4}Assigment IV: Trend Analysis}{19}{section.4}

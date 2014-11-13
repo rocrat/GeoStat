@@ -1,0 +1,133 @@
+\documentclass{article}
+\usepackage{fullpage}
+\usepackage{placeins}
+\usepackage[colorlinks=true, linkcolor=blue]{hyperref}
+\title{Lab 2 Pattern Analysis-First Order Effect}
+\author{Dominic LaRoche}
+
+\begin{document}
+\maketitle
+For this lab we use the Japanese black pine sapling data which is dscribed below.
+<<readin>>=
+rm(list=ls())
+library(spatstat)
+data(japanesepines)
+jp<-japanesepines
+class(jp)
+@
+
+
+<<Summarize>>=
+summary(jp)
+par(xpd=T)
+plot(jp,axes=T, main="Japanese black pine saplings")
+@
+
+
+
+\FloatBarrier
+\section{Assignment I: Quadrat Tests}
+We will test for a first order effect using two different quadrat tests, one with 4 cells (2x2) and one with 16 (4x4).  The two grids are shown in figure~\ref{quads}.\\
+
+\begin{figure}
+<<FirstOrderEffect>>=
+par(mfrow=c(1,2))
+#2x2
+q.jp2<-quadratcount(jp,nx=2,ny=2)
+plot (jp, pch="+", main = " 2x2 Quadrat for jp data")
+plot (q.jp2, add=TRUE, col="red", cex=1.5, lty=2)
+#4x4
+q.jp4<-quadratcount(jp,nx=4,ny=4)
+plot (jp, pch="+", main = "4x4 Quadrat for jp data")
+plot (q.jp4, add=TRUE, col="red", cex=1.5, lty=2)
+@
+\caption{Quadrat counts for the Japanese black pine data.}
+\label{quads}
+\end{figure}
+
+We cannot reject the null hypothesis of complete spatial randomness with either the 2x2 or 4x4 quadrat tests ($\alpha \leq 0.1$).  However, the test statistic was highly dependent on the number of quadrats selected (the 3x3 test was nearly significant), which is not a desireable property. Moreover, Figures ~\ref{qt.jp2} and ~\ref{qt.jp4} show the counts and expected values for each cell.\\
+<<QuadratTestforCSR2x2>>=
+qt.jp2<-quadrat.test(jp,2,2)
+qt.jp2
+qt.jp4<-quadrat.test(jp,4,4)
+qt.jp4
+@
+
+\begin{figure}
+<<plottests2x2>>=
+plot(qt.jp2, main="Quadrat Test: 2x2 JP data")
+plot(jp, pch="+", col="red", add=T)
+@
+\caption{A plot of the test for the 2x2 quadrat test.}
+\label{qt.jp2}
+\end{figure}
+
+\begin{figure}
+<<plottests4x4>>=
+plot(qt.jp4, main="Quadrat Test: 4x4 JP data")
+plot(jp, pch="+", col="red", add=T)
+@
+\caption{A plot of the test for the 4x4 quadrat test.}
+\label{qt.jp4}
+\end{figure}
+\FloatBarrier
+
+\section{Assignment II: Kernel estimation}
+Kernel estimation is subject to the bandwidth selected by the user.  Figure~\ref{kern} shows two different realizations of kernel density estimation with bandwidths equal to 0.05 (top) and 0.1 (bottom).  The smaller bandwith gives a much closer fit to the actual points but this may not approximate the underlying process very well.  The larger bandwidth may over smooth the underlying density and hide real patterns.\\
+\begin{figure}
+<<kernelest05>>=
+# ?density.ppp
+par(mfrow=c(2,1))
+jp.Z.0.5<-density.ppp(jp, 0.05)
+plot(jp.Z.0.5, main="Kernel Estimation of JP: sigma=0.05")
+points(jp, pch="+", col="6")
+
+jp.Z.1<-density.ppp(jp, 0.1)
+plot(jp.Z.1, main="Kernel Estimation of JP: sigma =0.1")
+points(jp, pch="+", col="6")
+@
+\caption{Two different kernel density estimation with sigma =0.05 and 0.1.}
+\label{kern}
+\end{figure}
+\FloatBarrier
+
+\section{Assignemnt 3: Second Order Effect}
+The plots of $\hat{G}$ (fig.~\ref{gest}) and $\hat{F}$ (fig.~\ref{fest}) both suggest that the pattern is random since there are no serious deviations between the theoretical and observed distances.  The $\hat{K}$ function plot (fig.~\ref{kest}) and the $\hat{L}$ function both suggest slight evidence of a regular pattern but the significance of this cannot be ascertained from the plots without confidence bands.\\
+
+\begin{figure}
+<<secondorder>>=
+jp.ghat<-Gest(jp)
+g.max<-max(jp.ghat$r)
+plot(jp.ghat, cbind(rs, theo)~r, main="G estimates", xlab="Dist")
+@
+\caption{Estimation of the G function using nearest neighbor distances and comparison with a theoretical poisson distribtion.}
+\label{gest}
+\end{figure}
+
+\begin{figure}
+<<secondorder2>>=
+jp.fhat<-Fest(jp)
+f.max<-max(jp.fhat$r)
+plot(jp.fhat, cbind(rs, theo)~r, main="F estimates", xlab="Dist")
+@
+\caption{Estimation of the G function using point-to-event distances and comparison with a theoretical poisson distribtion.}
+\label{fest}
+\end{figure}
+
+\begin{figure}
+<<Kest>>=
+jp.khat<-Kest(jp)
+plot(jp.khat, cbind(border, theo)~r, main="K function for JP data")
+@
+\caption{Plot of the K function for the japanese pine data showing the same pattern as the $\hat{G}$ and $\hat{F}$ plots.}
+\label{kest}
+\end{figure}
+
+\begin{figure}
+<<Lhat>>=
+plot(jp.khat, sqrt(cbind(border, theo)/pi)-r~r,ylab="L(r)", main="L function for jp", ylim=c(-0.025, 0.025))
+@
+\caption{The $\hat{L}$ plot of the same japanses pine data suggesting a regular pattern in the data.}
+\label{lest}
+\end{figure}
+\end{document}

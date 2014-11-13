@@ -1,0 +1,296 @@
+\documentclass{article}
+\usepackage{fullpage}
+\usepackage{placeins}
+\usepackage[colorlinks=true, linkcolor=blue]{hyperref}
+\title{Lab 3 Pattern Analysis-Hypothesis Testing}
+\author{Dominic LaRoche}
+
+\begin{document}
+\maketitle
+
+\section{Assigment I}
+Based on the inclusion of simulation results (fig.~\ref{fest}) we can conclude that the japanese pine sapling data is not different from complete spatial randomness (CSR).
+<<readin>>=
+rm(list=ls())
+library(spatstat)
+data(japanesepines)
+jp<-japanesepines
+@
+
+<<simCSR,echo=FALSE,eval=FALSE>>=
+r1<-runifpoint(65) #Generate 65 uniform random points
+plot(r1, pch="+", main="65 points under CSR")
+#Quadrat test
+quadrat.test(r1,3,3)#Is this CSR
+quadrat.test(r1,4,4)#Is this CSR?
+#one more random points
+r2<-runifpoint(65)
+#Quadrat test
+quadrat.test(r2,3,3)
+quadrat.test(r2,4,4)
+@
+
+
+<<testingCSR,results='hide',echo=FALSE,eval=FALSE>>=
+r1.ghat<-Gest(r1)
+r1.ghat$rs #Ghat value at each r
+#the following plots are similar except for the x,y limit
+par(mfrow=c(1,2))
+plot(r1.ghat)
+plot(r1.ghat$r, r1.ghat$rs, type="l", xlim=c(0,0.1),xlab="r", ylab="G(r)")
+r2.ghat<-Gest(r2)
+plot(r2.ghat)
+plot(r2.ghat$r, r2.ghat$rs, type="l", xlim=c(0,0.1),xlab="r", ylab="G(r)")
+par(mfrow=c(1,1))
+#Monte Carlo simulation
+#Repeat to generate random points and to take Ghat values 100 times
+hold<-matrix(0, nrow=100, ncol=length(r1.ghat$r))
+dim(hold)
+for (i in 1: 100){
+  rp<-runifpoint(65)
+  rp.ghat<-Gest(rp, r1.ghat$r)
+  rp.ghat.rs<-rp.ghat$rs
+  hold[i,]<-rp.ghat.rs
+}
+
+r1.ghat$r[100] #100th distance point
+summary(hold[,100]) #summary of Ghat at the 100th distance point
+max(hold[,100]) #upper bound of 100 simulations at 100th point
+min(hold[,100]) #lower bound of 100 simulations at 100th point
+apply(hold,1,max)[100]
+#get the upper bound and lower bound at every point
+ubnd<-apply(hold,2,max)
+lbnd<-apply(hold,2,min)
+#plot the results with rdwd data
+rdwd.ghat<-Gest(rdwd)
+plot(rdwd.ghat, rs~r, xlim=c(0, max(r1.ghat$r)))
+lines(r1.ghat$r,ubnd, lty=2, col=2)
+lines(r1.ghat$r,lbnd, lty=2,col=2)
+@
+
+<<SimBounds,eval=TRUE,echo=FALSE,fig.show='hide',results='hide'>>=
+ghat.env<-function(n, s, r, win=owin(c(0,1),c(0,1))){
+  #function to create bounds in data frame for CSR points
+  hold<-matrix(0,s, length(r))
+  for (i in 1:s){
+    hold[i,]<-Gest(runifpoint(n,win=win), r=r)$rs
+  }
+  mn<-apply(hold, 2, mean)
+  Up<-apply(hold,2,max)
+  Down<-apply(hold,2,min)
+  return(data.frame(mn,Up, Down))
+}
+jp.ghat<-Gest(jp)
+jp.win<-window(jp)
+plot(jp.ghat, rs~r, main="G estimates")
+jp.genv<-ghat.env(n=jp$n, s=100, r=jp.ghat$r, win=jp.win)
+#upper and lower envelopes
+lines(jp.ghat$r, jp.genv$Up,lty=5, col=2)
+lines(jp.ghat$r,jp.genv$Down,lty=5, col=2)
+@
+
+\begin{figure}
+<<FestBounds>>=
+fhat.env<-function(n, s, r, win=owin(c(0,1),c(0,1))){
+  #function to create upper and lower CSR bounds on Fest
+  hold<-matrix(0,s, length(r))
+  for (i in 1:s){
+    hold[i,]<-Fest(runifpoint(n,win=win), r=r)$rs
+  }
+  mn<-apply(hold, 2, mean)
+  Up<-apply(hold,2,max)
+  Down<-apply(hold,2,min)
+  return(data.frame(mn,Up, Down))
+}
+
+jp.fhat<-Fest(jp)
+jp.win<-window(jp)
+plot(jp.fhat, rs~r, main="F estimates")
+jp.fenv<-fhat.env(n=jp$n, s=100, r=jp.fhat$r, win=jp.win)
+#upper and lower envelopes
+lines(jp.fhat$r, jp.fenv$Up,lty=5, col=2)
+lines(jp.fhat$r,jp.fenv$Down,lty=5, col=2)
+@
+\caption{Plot of $\hat{F}$ with upper and lower envelopes simulated from completely spatially random (CSR) data.}
+\label{fest}
+\end{figure}
+
+\FloatBarrier
+
+\section{Assignment II}
+Here I define a function to get upper and lower bounds for the K function:\\
+<<Kbounds>>=
+khat.env<-function(n, s, r, win=owin(c(0,1),c(0,1))){
+  #function to create upper and lower CSR bounds on Fest
+  hold<-matrix(0,s, length(r))
+  for (i in 1:s){
+    hold[i,]<-Kest(runifpoint(n,win=win), r=r)$border
+  }
+  mn<-apply(hold, 2, mean)
+  Up<-apply(hold,2,max)
+  Down<-apply(hold,2,min)
+  return(data.frame(mn,Up, Down))
+}
+@
+Based on the plot of the K-function with upper and lower bounds created from simulated CSR data (fig.~\ref{kest}), we can conclude that the Japanese pine saplings are not significantly different from CSR.\\
+
+\begin{figure}
+<<Kboundplot>>=
+jp.khat<-Kest(jp)
+plot(jp.khat, cbind(border, theo)~r, main="K function for JP data")
+jp.kenv<-khat.env(n=jp$n, s=100, r=jp.khat$r, win=jp.win)
+#upper and lower envelopes
+lines(jp.khat$r, jp.kenv$Up,lty=5, col=3)
+lines(jp.khat$r,jp.kenv$Down,lty=5, col=3)
+@
+\caption{Plot of the $\hat{K}$ function with upper  and lower bounds created from simulated CSR data.  The red dashed line represents the theoretical K-function for a poisson CSR pattern.}
+\label{kest}
+\end{figure}
+
+\FloatBarrier
+
+\section{Assignment III}
+
+<<redwoods>>=
+data(redwood) #load the dataset
+# summary(redwood)
+regular<-rsyst(nx=10) #generate regular pattern
+# summary(regular)
+rdwd<-redwood
+@
+
+\subsection{Quadrat Tests}
+We will test for a first order effect using two different quadrat tests, one with 4 cells (2x2) and one with 16 (4x4).  The two grids are shown in figure~\ref{quads}.\\
+
+\begin{figure}
+<<FirstOrderEffect>>=
+par(mfrow=c(1,2))
+#2x2
+q.rdwd2<-quadratcount(rdwd,nx=2,ny=2)
+plot (rdwd, pch="+", main = " 2x2 Quadrat for redwood data")
+plot (q.rdwd2, add=TRUE, col="red", cex=1.5, lty=2)
+#4x4
+q.rdwd4<-quadratcount(rdwd,nx=4,ny=4)
+plot (rdwd, pch="+", main = "4x4 Quadrat for rdwd data")
+plot (q.rdwd4, add=TRUE, col="red", cex=1.5, lty=2)
+@
+\caption{Quadrat counts for the California redwood data.}
+\label{quads}
+\end{figure}
+
+We cannot reject the null hypothesis of complete spatial randomness with the 2x2 quadrat tests ($\alpha \geq 0.1$).  However, the 4x4 quadrat test produced a highly significant result (p-value = 0.0004). Figures ~\ref{qt.rdwd2} and ~\ref{qt.rdwd4} show the counts and expected values for each cell.\\
+<<QuadratTestforCSR2x2>>=
+qt.rdwd2<-quadrat.test(rdwd,2,2)
+qt.rdwd2
+qt.rdwd4<-quadrat.test(rdwd,4,4)
+qt.rdwd4
+@
+
+\begin{figure}
+<<plottests2x2>>=
+plot(qt.rdwd2, main="Quadrat Test: 2x2 rdwd data")
+plot(rdwd, pch="+", col="red", add=T)
+@
+\caption{A plot of the test for the 2x2 quadrat test.}
+\label{qt.rdwd2}
+\end{figure}
+
+\begin{figure}
+<<plottests4x4>>=
+plot(qt.rdwd4, main="Quadrat Test: 4x4 rdwd data")
+plot(rdwd, pch="+", col="red", add=T)
+@
+\caption{A plot of the test for the 4x4 quadrat test.}
+\label{qt.rdwd4}
+\end{figure}
+\FloatBarrier
+
+\subsection{Kernel estimation}
+Figure~\ref{kern} shows two different realizations of kernel density estimation with bandwidths equal to 0.05 (top) and 0.1 (bottom) for both the Japanese pine sapling data and the California redwood data.  Both bandwidth values appear to indicate clustering of the points in the redwood data (bottom) whereas the pine data (top) is not as well captured by either kernel.\\
+\begin{figure}
+<<kernelest05>>=
+# ?density.ppp
+par(mfrow=c(2,2))
+jp.Z.0.5<-density.ppp(jp, 0.05)
+plot(jp.Z.0.5, main="JP: sigma=0.05")
+points(jp, pch="+", col="6")
+
+jp.Z.1<-density.ppp(jp, 0.1)
+plot(jp.Z.1, main="JP: sigma =0.1")
+points(jp, pch="+", col="6")
+
+rdwd.Z.0.5<-density.ppp(rdwd, 0.05)
+plot(rdwd.Z.0.5, main="RdWd: Sigma=0.05")
+points(rdwd, pch="+", col="6")
+
+rdwd.Z.1<-density.ppp(rdwd, 0.1)
+plot(rdwd.Z.1, main="RdWd: Sigma =0.1")
+points(rdwd, pch="+", col="6")
+@
+\caption{Two different kernel density estimation with sigma =0.05 and 0.1 for the Japanese pine sapling data (top) and the redwood data (bottom).}
+\label{kern}
+\end{figure}
+\FloatBarrier
+
+\subsection{Second Order Effect}
+The plots of $\hat{G}$ (fig.~\ref{gest2}) and $\hat{F}$ (fig.~\ref{fest2}) both suggest that the pattern is not random for the California redwood data.  In the $\hat{G}$ plot the ECDF lies above the upper and lower bounds generated from simulated CSR data.  This suggests that the redwood saplings are clustered in space. The same inference is made from the $\hat{F}$ plot in which the distance between a random point and an observed point is larger than one would expect with CSR points.  The $\hat{K}$ function plot (fig.~\ref{kest2}) and the $\hat{L}$ function both  Also indicate clustering in the California redwood data.  For all plots references above the Japanese pine sapling data lies within the CSR bounds calculated from simulated CSR data.  This indicates that we cannot reject the null hypothesis of CSR.\\
+
+\begin{figure}
+<<secondorder>>=
+rdwd.ghat<-Gest(rdwd)
+rdwd.win<-window(rdwd)
+plot(rdwd.ghat, rs~r, main="G estimates")
+plot(jp.ghat, rs~r, add=T, col=4)
+
+rdwd.genv<-ghat.env(n=rdwd$n, s=100, r=rdwd.ghat$r, win=rdwd.win)
+#upper and lower envelopes
+lines(rdwd.ghat$r, rdwd.genv$Up,lty=5, col=2)
+lines(rdwd.ghat$r,rdwd.genv$Down,lty=5, col=2)
+legend("topleft",legend=c("Redwood","Pine","CSR Bounds"),col=c(1,4,2),lty=c(1,1,5))
+@
+\caption{Estimation of the G function using nearest neighbor distances and comparison with simulated upper and lower bounds of poisson CSR data.  The black line represents the redwood data and falls outside the CSR bounds whereas the blue line represents the Japanese pine data and falls inside the CSR bounds}
+\label{gest2}
+\end{figure}
+
+\begin{figure}
+<<secondorder2>>=
+rdwd.fhat<-Fest(rdwd)
+plot(rdwd.fhat, rs~r, main="F estimates")
+plot(jp.fhat, rs~r, add=T, col=4)
+rdwd.fenv<-fhat.env(n=rdwd$n, s=100, r=rdwd.fhat$r, win=rdwd.win)
+#upper and lower envelopes
+lines(rdwd.fhat$r, rdwd.fenv$Up,lty=5, col=2)
+lines(rdwd.fhat$r,rdwd.fenv$Down,lty=5, col=2)
+legend("topleft",legend=c("Redwood","Pine","CSR Bounds"),col=c(1,4,2),lty=c(1,1,5))
+@
+\caption{Estimation of the F function using point-to-event distances and comparison with upper and lower bounds generated from CSR data for both the Japanese pine sapling data and the California redwood data.  As before the redwood data lies outside the CSR bounds whereas the pine data lies inside.}
+\label{fest2}
+\end{figure}
+
+\begin{figure}
+<<Kest>>=
+rdwd.khat<-Kest(rdwd)
+plot(rdwd.khat, border~r, main="K function for rdwd data")
+plot(jp.khat, border~r, add=T, col=4)
+rdwd.kenv<-khat.env(n=rdwd$n, s=100, r=rdwd.khat$r, win=rdwd.win)
+#upper and lower envelopes
+lines(rdwd.khat$r, rdwd.kenv$Up,lty=5, col=2)
+lines(rdwd.khat$r,rdwd.kenv$Down,lty=5, col=2)
+legend("topleft",legend=c("Redwood","Pine","CSR Bounds"),col=c(1,4,2),lty=c(1,1,5))
+@
+\caption{Plot of the K function for the redwood data showing the same pattern as the $\hat{G}$ and $\hat{F}$ plots, i.e. the redwood data appears clustered and the pine data lies within what we would expect from CSR data.}
+\label{kest2}
+\end{figure}
+
+\begin{figure}
+<<Lhat,results='hide'>>=
+plot(rdwd.khat, sqrt(cbind(border, theo)/pi)-r~r,ylab="L(r)", main="L function",ylim=c(-.07,.07),lty=c(1,2),col=c(1,3),legend=F)
+plot(jp.khat, sqrt(border/pi)-r~r,add=TRUE, col=4)
+lines(rdwd.khat$r, sqrt(rdwd.kenv$Up/pi)-rdwd.khat$r,lty=5, col=2)
+lines(rdwd.khat$r, sqrt(rdwd.kenv$Down/pi)-rdwd.khat$r,lty=5, col=2)
+legend("topleft",legend=c("Redwood","Pine","CSR Bounds","Pois."),col=c(1,4,2,3),lty=c(1,1,5,2))
+@
+\caption{The $\hat{L}$ plot of the california redwood and Japanese pine data indicating a cluster pattern in the  redwood data and a random pattern in the pine data.  The horizontal green lines shows the expected value for a poisson CSR realization.}
+\label{lest}
+\end{figure}
+\end{document}

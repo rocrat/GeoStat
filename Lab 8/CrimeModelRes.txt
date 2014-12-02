@@ -1,0 +1,51 @@
+SUMMARY OF OUTPUT: ORDINARY LEAST SQUARES ESTIMATION
+Data set            :  columbus
+Dependent Variable  :       CRIME  Number of Observations:   49
+Mean dependent var  :     35.1288  Number of Variables   :    3
+S.D. dependent var  :     16.5605  Degrees of Freedom    :   46 
+
+R-squared           :    0.552404  F-statistic           :     28.3856
+Adjusted R-squared  :    0.532943  Prob(F-statistic)     :9.34074e-009
+Sum squared residual:     6014.89  Log likelihood        :    -187.377
+Sigma-square        :     130.759  Akaike info criterion :     380.754
+S.E. of regression  :      11.435  Schwarz criterion     :      386.43
+Sigma-square ML     :     122.753
+S.E of regression ML:     11.0794
+
+-----------------------------------------------------------------------
+    Variable   Coefficient      Std.Error    t-Statistic   Probability  
+-----------------------------------------------------------------------
+    CONSTANT      68.61896       4.735486       14.49037    0.0000000
+       HOVAL    -0.2739315      0.1031987      -2.654409    0.0108745
+         INC     -1.597311      0.3341308      -4.780496    0.0000183
+-----------------------------------------------------------------------
+
+
+REGRESSION DIAGNOSTICS  
+MULTICOLLINEARITY CONDITION NUMBER   6.541828
+TEST ON NORMALITY OF ERRORS
+TEST                  DF          VALUE            PROB
+Jarque-Bera            2           1.835753        0.3993663
+
+DIAGNOSTICS FOR HETEROSKEDASTICITY  
+RANDOM COEFFICIENTS
+TEST                  DF          VALUE            PROB
+Breusch-Pagan test     2           7.900442        0.0192505
+Koenker-Bassett test   2           5.694088        0.0580156
+SPECIFICATION ROBUST TEST
+TEST                  DF          VALUE            PROB
+White                  5           19.94601        0.0012792
+
+DIAGNOSTICS FOR SPATIAL DEPENDENCE   
+FOR WEIGHT MATRIX : columbus.gal
+   (row-standardized weights)
+TEST                          MI/DF      VALUE          PROB  
+Moran's I (error)           0.222109     2.8400531      0.0045107
+Lagrange Multiplier (lag)       1        8.8979986      0.0028548
+Robust LM (lag)                 1        3.7356906      0.0532617
+Lagrange Multiplier (error)     1        5.2062139      0.0225063
+Robust LM (error)               1        0.0439059      0.8340287
+Lagrange Multiplier (SARMA)     2        8.9419045      0.0114364
+========================= END OF REPORT ==============================
+
+
